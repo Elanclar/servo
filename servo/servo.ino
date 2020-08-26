@@ -11,6 +11,9 @@
 #define SERIAL_BPS 57600
 
 char serial_char = 0;
+char next_data = 0;
+
+unsigned long time_since_sent = 0;
 
 Servo servo_tilt, servo_pan;
 
@@ -32,17 +35,31 @@ void loop(){
     // loop() reads data from serial port and identifies the corresponding servo ID
     // It then updates the servo according to the transmitted info
     // If the command character is not the pan or tilt servo ID, it is ignored.
-    while(Serial.available() <=0) {
+    if (Serial.available() > 0) {
         serial_char = Serial.read();
-        if(serial_char == TILT_CHANNEL) {
-            while(Serial.available() <=0) {
+        if (serial_char == TILT_CHANNEL) {
+            while (Serial.available() > 0) {
                 servo_tilt.write(Serial.read());
             }
+            Serial.write(next_data);
+            next_data = 1;
+            time_since_sent = millis();
         }
-        else if(serial_char == PAN_CHANNEL){
-            while(Serial.available() <= 0) {
+        else if (serial_char == PAN_CHANNEL){
+            while (Serial.available() > 0) {
                 servo_pan.write(Serial.read());
             }
+            Serial.write(next_data);
+            next_data = 0;
+            time_since_sent = millis();
         }
+    } else if (millis() - time_since_sent > 1000) {
+        Serial.write(next_data);
+        if (next_data == 0) {
+            next_data = 1;
+        } else {
+            next_data = 0;
+        }
+        time_since_sent = millis();
     }
 }

@@ -1,64 +1,54 @@
-/**
- * Servocontrol (derived from processing Mouse 1D example.)
- *
- * Updated 24 November 2007
- */
-
-
-// Use the included processing code serial library
+//Processing code:
 import processing.serial.*;       
-
-
-int gx = 15;
-int gy = 35;
-int spos=90;
-
-float leftColor = 0.0;
-float rightColor = 0.0;
-Serial port;                         // The serial port
-
-
+int xpos = 90; // set x servo's value to mid point (0-180);
+int ypos = 90; // and the same here
+Serial port; // The serial port we will be using
+int value = 9;
 
 void setup()
 {
   size(720, 720);
-  colorMode(RGB, 1.0);
-  noStroke();
-  rectMode(CENTER);
   frameRate(100);
-
   println(Serial.list()); // List COM-ports
-
-  //select second com-port from the list
-  port = new Serial(this, Serial.list()[0], 19200);
+  // You will want to change the [1] to select the correct device
+  // Remember the list starts at [0] for the first option.
+  port = new Serial(this, Serial.list()[0], 57600);
+  println("Program started");
 }
 
 void draw()
 {
-  background(0.0);
-  update(mouseX);
-  fill(mouseX/4);
-  rect(150, 320, gx*2, gx*2);
-  fill(180 - (mouseX/4));
-  rect(450, 320, gy*2, gy*2);
+  fill(175);
+  rect(0, 0, 360, 360);
+  fill(255, 0, 0); //rgb value so RED
+  rect(180, 175, mouseX - 180, 10); //xpos, ypos, width, height
+  fill(0, 255, 0); // and GREEN
+  rect(175, 180, 10, mouseY - 180);
+  update(mouseX, mouseY);
 }
 
-void update(int x)
+void update(int x, int y)
 {
   //Calculate servo postion from mouseX
-  spos= x/4;
+  xpos = x / 2;
+  ypos = y / 2;
 
-  //Output the servo position ( from 0 to 180)
-  println(spos);
-  port.write("s"+spos);
-
-
-
-  // Just some graphics
-  leftColor = -0.002 * x/2 + 0.06;
-  rightColor =  0.002 * x/2 + 0.06;
-
-  gx = x/2;
-  gy = 100-x/2;
-
+  //Output the servo position (from 0 to 180)
+  while (port.available() > 0) {
+    while (port.available() > 0) {
+      value = port.read();
+    }
+    println("Reading from Arduino: " + value);
+    if (value == 0) {
+      port.write(0);
+      port.write(xpos);
+      println("Sent 0: " + xpos);
+      value = 9;
+    } else if (value == 1) {
+      port.write(1);
+      port.write(ypos);
+      println("Sent 1: " + ypos);
+      value = 9;
+    }
+  }
 }
